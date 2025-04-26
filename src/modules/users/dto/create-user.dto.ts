@@ -18,4 +18,8 @@ export class CreateUserDto {
   @IsPhoneNumber('VN')
   @IsOptional()
   phone: string;
+
+  @IsString()
+  @IsNotEmpty()
+  password: string;
 }

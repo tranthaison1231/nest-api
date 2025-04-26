@@ -11,7 +11,9 @@ import {
 import { UpdateTourDto } from '../tour/dto/update-tour.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UsersService } from './users.service';
+import { Auth } from 'src/common/decorators/auth.decorator';
 
+@Auth()
 @Controller()
 export class UsersController {
   constructor(private usersService: UsersService) {}
