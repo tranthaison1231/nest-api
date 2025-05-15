@@ -6,11 +6,15 @@ import {
 } from '@nestjs/common';
 import { verify } from 'jsonwebtoken';
 
+export interface CustomRequest extends Request {
+  userEmail: string;
+}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> {
     try {
-      const request = context.switchToHttp().getRequest<Request>();
+      const request = context.switchToHttp().getRequest<CustomRequest>();
       const bearerToken = request.headers['authorization'] as
         | string
         | undefined;
@@ -21,14 +25,16 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('User is not authenticated');
       }
 
-      const isLoggedIn = verify(accessToken, process.env.JWT_SECRET) as {
+      const userPayload = verify(accessToken, process.env.JWT_SECRET) as {
         sub: string;
         email: string;
       };
 
-      if (!isLoggedIn) {
+      if (!userPayload) {
         throw new UnauthorizedException('User is not authenticated');
       }
+
+      request.userEmail = userPayload.email;
 
       return true;
     } catch {
