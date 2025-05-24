@@ -13,6 +13,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 import { getEmailTemplate } from 'src/common/helpers/email';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 @Injectable()
 export class AuthenticationService {
   constructor(
@@ -57,6 +58,14 @@ export class AuthenticationService {
 
   async register(registerDto: RegisterDto) {
     try {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { email: registerDto.email },
+      });
+
+      if (existingUser) {
+        throw new BadRequestException('Email already exists');
+      }
+
       const hash = await argon2.hash(registerDto.password);
 
       const user = await this.prisma.user.create({
@@ -68,7 +77,12 @@ export class AuthenticationService {
 
       return user;
     } catch (error) {
-      console.log(error);
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new BadRequestException('Email already exists');
+        }
+      }
+      throw new BadRequestException('Something went wrong');
     }
   }
 
